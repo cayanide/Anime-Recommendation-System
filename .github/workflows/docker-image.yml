@@ -1,55 +1,36 @@
-name: Build and Push Docker Image to GHCR
+name: Build and Publish Docker Image
 
 on:
   push:
     branches:
-      - main  # Trigger the workflow when you push to the 'main' branch (or your default branch)
-  pull_request:
-    branches:
-      - main  # Trigger the workflow for pull requests targeting the 'main' branch
-  # You can add more events like tags or scheduled cron jobs as needed
+      - main # Trigger on push to the main branch
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    steps:
-      # Step 1: Check out the repository
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
-      # Step 2: Set up Docker Buildx
+    steps:
+      # Checkout the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Set up Docker Buildx (advanced features for building multi-platform Docker images)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Step 3: Log in to GitHub Container Registry (GHCR)
+      # Log in to GitHub Container Registry (GHCR) using a GitHub token
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
+          registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}  # GitHub automatically provides this token for authentication
+          password: ${{ secrets.GH_TOKEN }}
 
-      # Step 4: Build the Docker image
-      - name: Build Docker image
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/anime-recommendation-app:latest .
-
-      # Step 5: Push the Docker image to GHCR
-      - name: Push Docker image to GHCR
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/anime-recommendation-app:latest
-
-  # Optional: You can add additional jobs for testing, linting, or deployment here
-  # Example: Test the Docker image
-  test:
-    runs-on: ubuntu-latest
-    needs: build  # Ensure the 'build' job runs first
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Run tests in Docker container
-        run: |
-          docker build -t test-anime-recommendation-app .
-          docker run --rm test-anime-recommendation-app pytest  # Assuming you use pytest for testing
+      # Build and push the Docker image
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/cayanide/product-sentiment-analysis:v8
