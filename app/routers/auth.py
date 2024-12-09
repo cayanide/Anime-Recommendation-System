@@ -1,3 +1,4 @@
+#app/routers/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
@@ -25,7 +26,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     return db_user
 
-@router.post("/login")
+@router.post("/token")
 def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if not db_user or not verify_password(user.password, db_user.hashed_password):
