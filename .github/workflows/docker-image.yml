@@ -3,7 +3,7 @@ name: Build and Publish Docker Image
 on:
   push:
     branches:
-      - main # Trigger on push to the main branch
+      - main  # Trigger on push to the main branch
 
 jobs:
   build:
@@ -24,7 +24,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GH_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}  # GH_TOKEN is the default GitHub token provided by the action
 
       # Build and push the Docker image
       - name: Build and Push Docker image
@@ -34,3 +34,12 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/cayanide/animerecommend:latest
+
+      # Make the Docker image public on GitHub Container Registry
+      - name: Make Docker image public on GHCR
+        run: |
+          # Set the visibility of the Docker image to public using GitHub API
+          curl -X PATCH \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -d '{"visibility": "public"}' \
+            "https://api.github.com/user/packages/container/${{ github.repository_owner }}/animerecommend/versions/latest"
