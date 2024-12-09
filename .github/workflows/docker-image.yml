@@ -38,8 +38,7 @@ jobs:
       # Make the Docker image public on GitHub Container Registry
       - name: Make Docker image public on GHCR
         run: |
-          # Set the visibility of the Docker image to public using GitHub API
           curl -X PATCH \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
             -d '{"visibility": "public"}' \
             "https://api.github.com/user/packages/container/${{ github.repository_owner }}/animerecommend/versions/latest"
