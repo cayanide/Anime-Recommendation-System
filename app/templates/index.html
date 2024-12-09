@@ -4,20 +4,43 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Anime Recommendation System</title>
-        <!-- Link to FontAwesome for icons -->
         <link
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
             rel="stylesheet"
         />
-        <!-- Link to your CSS file -->
         <link rel="stylesheet" href="/static/styles.css" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            /* Additional animations and transitions */
+            .fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+        </style>
     </head>
     <body>
-        <div class="app-container">
-            <h1 class="app-title">Anime Recommendation System</h1>
+        <div class="app-container fade-in">
+            <nav class="navbar">
+                <ul>
+                    <li>
+                        <a href="#" id="login-link" class="active">Login</a>
+                    </li>
+                    <li><a href="#" id="register-link">Register</a></li>
+                </ul>
+            </nav>
 
             <!-- Login Section -->
-            <div class="section-container">
+            <div id="login-section" class="section-container fade-in">
                 <h2 class="section-title">
                     Login <i class="fas fa-sign-in-alt"></i>
                 </h2>
@@ -48,7 +71,7 @@
             </div>
 
             <!-- Registration Section -->
-            <div class="section-container">
+            <div id="register-section" class="section-container fade-in hidden">
                 <h2 class="section-title">
                     Register <i class="fas fa-user-plus"></i>
                 </h2>
@@ -81,7 +104,7 @@
             </div>
 
             <!-- Anime Search Section -->
-            <div class="section-container">
+            <div class="section-container fade-in">
                 <h2 class="section-title">
                     Search Anime <i class="fas fa-search"></i>
                 </h2>
@@ -98,19 +121,20 @@
                         />
                     </div>
                     <div class="input-field">
-                        <button type="submit" class="btn-submit">Search</button>
+                        <button type="submit" class="btn-submit">Go</button>
                     </div>
                 </form>
                 <div id="search-result" class="search-result"></div>
             </div>
 
             <!-- Anime Recommendations Section -->
-            <div class="section-container">
+            <div class="section-container fade-in">
                 <h2 class="section-title">
                     Your Recommendations <i class="fas fa-heart"></i>
                 </h2>
                 <button id="load-recommendations" class="btn-submit">
                     Load Recommendations
+                    <i class="fas fa-spinner fa-spin" id="loading-icon"></i>
                 </button>
                 <div
                     id="recommendation-result"
@@ -121,6 +145,41 @@
         </div>
 
         <script>
+            // Toggle between login and register sections
+            document
+                .getElementById("login-link")
+                .addEventListener("click", () => {
+                    document
+                        .getElementById("login-section")
+                        .classList.remove("hidden");
+                    document
+                        .getElementById("register-section")
+                        .classList.add("hidden");
+                    document
+                        .getElementById("login-link")
+                        .classList.add("active");
+                    document
+                        .getElementById("register-link")
+                        .classList.remove("active");
+                });
+
+            document
+                .getElementById("register-link")
+                .addEventListener("click", () => {
+                    document
+                        .getElementById("login-section")
+                        .classList.add("hidden");
+                    document
+                        .getElementById("register-section")
+                        .classList.remove("hidden");
+                    document
+                        .getElementById("login-link")
+                        .classList.remove("active");
+                    document
+                        .getElementById("register-link")
+                        .classList.add("active");
+                });
+
             // Handle login form submission
             document
                 .getElementById("login-form")
@@ -128,13 +187,13 @@
                     event.preventDefault();
                     const username = document.getElementById("username").value;
                     const password = document.getElementById("password").value;
-
+                    document.getElementById("login-result").innerHTML =
+                        "Logging in...";
                     const response = await fetch("/auth/token", {
                         method: "POST",
                         body: JSON.stringify({ username, password }),
                         headers: { "Content-Type": "application/json" },
                     });
-
                     const data = await response.json();
                     if (response.ok) {
                         document.getElementById("login-result").innerHTML =
@@ -155,13 +214,13 @@
                         document.getElementById("register-username").value;
                     const password =
                         document.getElementById("register-password").value;
-
+                    document.getElementById("register-result").innerHTML =
+                        "Registering...";
                     const response = await fetch("/auth/register", {
                         method: "POST",
                         body: JSON.stringify({ username, password }),
                         headers: { "Content-Type": "application/json" },
                     });
-
                     const data = await response.json();
                     if (response.ok) {
                         document.getElementById("register-result").innerHTML =
@@ -179,7 +238,6 @@
                     event.preventDefault();
                     const searchTerm =
                         document.getElementById("search-term").value;
-
                     const response = await fetch(
                         `/anime/search?name=${searchTerm}`,
                         {
@@ -189,7 +247,6 @@
                             },
                         },
                     );
-
                     const data = await response.json();
                     const searchResult =
                         document.getElementById("search-result");
@@ -208,13 +265,14 @@
             document
                 .getElementById("load-recommendations")
                 .addEventListener("click", async () => {
+                    const loadingIcon = document.getElementById("loading-icon");
+                    loadingIcon.style.display = "inline-block";
                     const response = await fetch("/anime/recommendations", {
                         method: "GET",
                         headers: {
                             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
                         },
                     });
-
                     const data = await response.json();
                     const animeList = document.getElementById("anime-list");
                     animeList.innerHTML = "";
@@ -224,16 +282,17 @@
                     ) {
                         data.recommendations.forEach((anime) => {
                             const animeCard = document.createElement("div");
-                            animeCard.className = "anime-card";
+                            animeCard.className = "anime-card fade-in";
                             animeCard.innerHTML = `
-                                <img src="${anime.coverImage.medium}" alt="${anime.title.romaji}" />
-                                <h3>${anime.title.romaji}</h3>
-                            `;
+                            <img src="${anime.coverImage.medium}" alt="${anime.title.romaji}" />
+                            <h3>${anime.title.romaji}</h3>
+                        `;
                             animeList.appendChild(animeCard);
                         });
                     } else {
                         animeList.innerHTML = "No recommendations found.";
                     }
+                    loadingIcon.style.display = "none";
                 });
         </script>
     </body>
