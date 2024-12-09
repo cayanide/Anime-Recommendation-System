@@ -16,51 +16,38 @@ schemas/: Contains Pydantic models for data validation.
 utils/: Contains utility functions like database connection and security (password hashing, token creation).
 templates/: Contains HTML templates for rendering views (if needed for frontend integration).
 main.py: The entry point for the FastAPI application, where routers and configurations are initialized.
-Installation
+
+
+Installation:
+
 To run the Anime Recommendation System, follow these steps:
 
-Clone the repository:
-
-
-
-git clone <repository-url>
-cd Anime-Recommendation-System
-Create a virtual environment:
-
-
-
-python3 -m venv venv
-source venv/bin/activate   # For macOS/Linux
-venv\Scripts\activate      # For Windows
 Install dependencies:
 
-
-
 pip install -r requirements.txt
-Set up environment variables: Create a .env file in the root directory and add the following variables:
 
-plaintext
+Set up environment variables: Create a .env file in the root directory and add the following variables:
 
 SECRET_KEY=<your-secret-key>
 DATABASE_URL=postgresql://<username>:<password>@localhost/<dbname>
+
 Set up the database: The application uses SQLAlchemy to interact with a PostgreSQL database. Ensure that your PostgreSQL server is running and the database URL is correctly set in the .env file.
 
 Run the following command to create the necessary database tables:
 
-
-
 alembic upgrade head
+
 Run the application: To start the server, use Uvicorn:
 
-
-
 uvicorn app.main:app --reload
-Access the API: Open your browser and go to http://127.0.0.1:8000 to access the application. The API documentation can be accessed at http://127.0.0.1:8000/docs.
 
-API Endpoints
+Access the API: Open your browser and go to http://127.0.0.1:8000 to access the application. 
+
+
 The system exposes the following key API endpoints:
 
 Authentication Endpoints
+
 Register User
 
 URL: /auth/register
