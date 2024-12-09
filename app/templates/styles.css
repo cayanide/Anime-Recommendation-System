@@ -1,0 +1,104 @@
+body {
+    font-family: "Arial", sans-serif;
+    background-color: #f0f4f8;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1,
+h2 {
+    color: #333;
+}
+
+.container {
+    width: 80%;
+    max-width: 1000px;
+    margin-top: 30px;
+}
+
+.form-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.form-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.input-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.input-field input {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.input-field button {
+    padding: 10px;
+    font-size: 16px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.input-field button:hover {
+    background-color: #45a049;
+}
+
+.anime-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.anime-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    text-align: center;
+}
+
+.anime-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.anime-card h3 {
+    font-size: 18px;
+    margin-top: 10px;
+    color: #333;
+}
+
+.login-result,
+.recommendation-result {
+    text-align: center;
+    font-weight: bold;
+    color: #e74c3c;
+}
+
+.form-container input[type="text"],
+.form-container input[type="password"] {
+    width: 100%;
+}
+
+/* Additional styling for icons */
+.icon {
+    margin-right: 8px;
+}
