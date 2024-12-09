@@ -33,4 +33,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/cayanide/product-sentiment-analysis:v8
+          tags: ghcr.io/cayanide/AnimeRecommend:v9
