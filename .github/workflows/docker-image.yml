@@ -24,7 +24,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}  # GH_TOKEN is the default GitHub token provided by the action
+          password: ${{ secrets.GH_TOKEN }}  # GH_TOKEN is the default GitHub token provided by the action
 
       # Build and push the Docker image
       - name: Build and Push Docker image
@@ -39,6 +39,6 @@ jobs:
       - name: Make Docker image public on GHCR
         run: |
           curl -X PATCH \
-            -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+            -H "Authorization: token ${{ secrets.GH_TOKEN}}" \
             -d '{"visibility": "public"}' \
             "https://api.github.com/user/packages/container/${{ github.repository_owner }}/animerecommend/versions/latest"
