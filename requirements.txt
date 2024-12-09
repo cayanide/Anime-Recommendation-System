@@ -11,3 +11,4 @@ aiohttp
 starlette
 Flask==2.3.0
 gunicorn==20.1.0
+pyjwt
