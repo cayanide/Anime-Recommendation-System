@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>User Dashboard</title>
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="/static/styles.css" />
+        <style>
+            /* Additional styles for the user dashboard */
+            .user-nav {
+                display: flex;
+                justify-content: space-between;
+                background-color: #333;
+                color: #fff;
+                padding: 10px;
+            }
+            .user-nav ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                display: flex;
+            }
+            .user-nav ul li {
+                margin: 0 15px;
+            }
+            .user-nav ul li a {
+                color: #fff;
+                text-decoration: none;
+            }
+            .user-nav .user-info {
+                display: flex;
+                align-items: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app-container">
+            <!-- Top Navigation Bar -->
+            <nav class="user-nav">
+                <ul>
+                    <li><a href="/home.html" class="active">Home</a></li>
+                    <li><a href="/anime/search">Search Anime</a></li>
+                    <li><a href="/user/preferences">Preferences</a></li>
+                    <li><a href="/user/search-history">Search History</a></li>
+                </ul>
+                <div class="user-info">
+                    <span>Hello, {{ user.username }}</span>
+                    <a href="/logout">Logout</a>
+                </div>
+            </nav>
+
+            <!-- Anime Recommendations Section -->
+            <div class="section-container">
+                <h2>Your Recommendations</h2>
+                <ul>
+                    {% for anime in recommendations %}
+                    <li>{{ anime.title }}</li>
+                    {% else %}
+                    <li>No recommendations available.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- User Preferences Section -->
+            <div class="section-container">
+                <h2>Your Preferences</h2>
+                <ul>
+                    {% for preference in preferences %}
+                    <li>{{ preference }}</li>
+                    {% else %}
+                    <li>No preferences set.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Search History Section -->
+            <div class="section-container">
+                <h2>Your Search History</h2>
+                <ul>
+                    {% for search in search_history %}
+                    <li>{{ search }}</li>
+                    {% else %}
+                    <li>No search history available.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

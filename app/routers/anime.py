@@ -1,10 +1,14 @@
+# app/routers/anime.py
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
-from app.schemas import AnimeSearchResult
+from app.models.schemas import AnimeSearchResult
 from app.utils.database import get_db
 from sqlalchemy.orm import Session
-from app.models import UserPreference
+from app.models.models import UserPreference
 import logging
+from app.auth.security import get_current_user
+
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -14,12 +18,13 @@ ANI_LIST_API_URL = "https://graphql.anilist.co/"
 
 router = APIRouter()
 
-async def get_anilist_data(query: str, variables: dict):
+# Add authorization check and token passing to requests
+async def get_anilist_data(query: str, variables: dict, token: str):
     async with httpx.AsyncClient() as client:
         try:
-            # Set headers for GraphQL request (typically you need to specify Content-Type)
             headers = {
                 "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}",  # Pass the token here
             }
 
             # Send the POST request with the query and variables
@@ -45,8 +50,9 @@ async def get_anilist_data(query: str, variables: dict):
             logger.error(f"An unexpected error occurred: {e}")
             raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
 
+# Add the current_user dependency to ensure authentication
 @router.get("/search")
-async def search_anime(name: str, db: Session = Depends(get_db)):
+async def search_anime(name: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     query = """
     query ($name: String) {
       Page(perPage: 10) {
@@ -64,10 +70,9 @@ async def search_anime(name: str, db: Session = Depends(get_db)):
     """
     variables = {"name": name}
 
-    # Get the response from the Anilist API
-    data = await get_anilist_data(query, variables)
+    # Get the response from the Anilist API using the token
+    data = await get_anilist_data(query, variables, current_user["access_token"])
 
-    # Check if the necessary data exists before accessing it
     if not data or "data" not in data or "Page" not in data["data"] or "media" not in data["data"]["Page"]:
         logger.error(f"Invalid response structure: {data}")
         raise HTTPException(status_code=500, detail="Failed to retrieve media from Anilist API")
@@ -75,9 +80,16 @@ async def search_anime(name: str, db: Session = Depends(get_db)):
     return data["data"]["Page"]["media"]
 
 @router.get("/recommendations")
-async def recommendations(db: Session = Depends(get_db)):
-    # Fetch recommendations based on user's preferences or watched anime
-    preferences = db.query(UserPreference).first()
+async def recommendations(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Fetch user preferences or use default preferences
+    preferences = db.query(UserPreference).filter(UserPreference.user_id == current_user["sub"]).first()
+
+    if not preferences:
+        logger.info(f"No preferences found for user {current_user['sub']}. Defaulting to 'Action' genre.")
+        genre = "Action"  # Default genre
+    else:
+        genre = preferences.favorite_genre
+
     query = """
     query ($genre: String) {
       Page(perPage: 10) {
@@ -93,12 +105,11 @@ async def recommendations(db: Session = Depends(get_db)):
       }
     }
     """
-    variables = {"genre": preferences.favorite_genre if preferences else "Action"}
+    variables = {"genre": genre}
 
-    # Get the response from the Anilist API
-    data = await get_anilist_data(query, variables)
+    # Get the response from the Anilist API using the token
+    data = await get_anilist_data(query, variables, current_user["access_token"])
 
-    # Check if the necessary data exists before accessing it
     if not data or "data" not in data or "Page" not in data["data"] or "media" not in data["data"]["Page"]:
         logger.error(f"Invalid response structure: {data}")
         raise HTTPException(status_code=500, detail="Failed to retrieve media from Anilist API")

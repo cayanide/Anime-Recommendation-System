@@ -1,14 +1,23 @@
-#app/utils/anilist.py
+# app/utils/anilist.py
 
 import os
-import httpx  # Use httpx for asynchronous requests
+import httpx
+import logging
 from typing import List, Dict
+
+# Set up logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 # Assuming you have these environment variables set
 CLIENT_ID = os.getenv("ANILIST_CLIENT_ID")
 CLIENT_SECRET = os.getenv("ANILIST_CLIENT_SECRET")
 REDIRECT_URL = os.getenv("REDIRECT_URL")
 API_URL = "https://graphql.anilist.co"
+
+# Check if the required environment variables are available
+if not all([CLIENT_ID, CLIENT_SECRET, REDIRECT_URL]):
+    raise EnvironmentError("Missing required AniList environment variables.")
 
 # Helper function to get the access token
 async def get_access_token(code: str) -> Dict:
@@ -22,8 +31,16 @@ async def get_access_token(code: str) -> Dict:
     }
 
     async with httpx.AsyncClient() as client:
-        response = await client.post(token_url, data=data)
-        return response.json()
+        try:
+            response = await client.post(token_url, data=data)
+            response.raise_for_status()  # Ensure we raise an error for bad status codes
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Failed to get access token: {e.response.status_code} - {e.response.text}")
+            raise Exception(f"Failed to get access token: {e.response.text}")
+        except httpx.RequestError as e:
+            logger.error(f"Error during token request: {e}")
+            raise Exception(f"Error during token request: {e}")
 
 # Function to query AniList GraphQL API with a given query
 async def fetch_from_anilist(query: str, variables: Dict = None) -> Dict:
@@ -33,9 +50,16 @@ async def fetch_from_anilist(query: str, variables: Dict = None) -> Dict:
     data = {"query": query, "variables": variables} if variables else {"query": query}
 
     async with httpx.AsyncClient() as client:
-        response = await client.post(API_URL, json=data, headers=headers)
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = await client.post(API_URL, json=data, headers=headers)
+            response.raise_for_status()  # Ensure we raise an error for bad status codes
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Anilist API returned HTTP error: {e.response.status_code} - {e.response.text}")
+            raise Exception(f"Anilist API returned HTTP error: {e.response.text}")
+        except httpx.RequestError as e:
+            logger.error(f"Error making request to Anilist: {e}")
+            raise Exception(f"Error making request to Anilist: {e}")
 
 # Function to fetch anime by name using AniList API
 async def get_anime_by_name(name: str) -> List[Dict]:

@@ -1,5 +1,8 @@
+#app/models/schemas.py
+
 from pydantic import BaseModel
 from typing import List, Optional, Dict
+from datetime import datetime
 
 # -----------------------------
 # User-related schemas
@@ -26,13 +29,14 @@ class PreferenceCreate(BaseModel):
 
 class UserPreferences(BaseModel):
     user_id: int
-    genres: List[str]  # List of user's favorite genres
+    genre: Optional[str] = None  # Genre can be optional now
 
-# Schema to represent a User
 class User(BaseModel):
     id: int  # Assuming the user has an ID in the database
     username: str
-    # You can add other fields here based on your database model (e.g., email, created_at, etc.)
+    email: Optional[str] = None
+    created_at: datetime  # Added created_at field
+    updated_at: datetime  # Added updated_at field
 
 # -----------------------------
 # Anime-related schemas
@@ -75,13 +79,15 @@ class AnimeCreate(BaseModel):
 # -----------------------------
 
 class ErrorResponse(BaseModel):
+    status_code: int  # Added status code for better error handling
     detail: str  # For general error messages
 
+# Unified Anime search result schema
 class AnimeSearchResult(BaseModel):
     id: Optional[int]  # Anime ID
     title: Optional[Dict[str, str]]  # Title in multiple languages (romaji, english, native)
-    image: Optional[Dict[str, str]]  # Image details (medium image URL)
+    image: Optional[str]  # Image URL for anime image
 
 # Define the response schema for the search results
-class AnimeSearchResponse(BaseModel):
+class AnimeSearchResultsResponse(BaseModel):
     results: List[AnimeSearchResult]  # List of anime search results

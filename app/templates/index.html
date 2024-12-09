@@ -26,6 +26,11 @@
                     opacity: 1;
                 }
             }
+
+            /* Hidden class for toggling sections */
+            .hidden {
+                display: none;
+            }
         </style>
     </head>
     <body>
@@ -102,46 +107,6 @@
                 </form>
                 <div id="register-result" class="register-result"></div>
             </div>
-
-            <!-- Anime Search Section -->
-            <div class="section-container fade-in">
-                <h2 class="section-title">
-                    Search Anime <i class="fas fa-search"></i>
-                </h2>
-                <form id="anime-search-form" class="form-card">
-                    <div class="input-field">
-                        <label for="search-term"
-                            >Search by Name or Genre:</label
-                        >
-                        <input
-                            type="text"
-                            id="search-term"
-                            name="search-term"
-                            required
-                        />
-                    </div>
-                    <div class="input-field">
-                        <button type="submit" class="btn-submit">Go</button>
-                    </div>
-                </form>
-                <div id="search-result" class="search-result"></div>
-            </div>
-
-            <!-- Anime Recommendations Section -->
-            <div class="section-container fade-in">
-                <h2 class="section-title">
-                    Your Recommendations <i class="fas fa-heart"></i>
-                </h2>
-                <button id="load-recommendations" class="btn-submit">
-                    Load Recommendations
-                    <i class="fas fa-spinner fa-spin" id="loading-icon"></i>
-                </button>
-                <div
-                    id="recommendation-result"
-                    class="recommendation-result"
-                ></div>
-                <div id="anime-list" class="anime-list"></div>
-            </div>
         </div>
 
         <script>
@@ -189,19 +154,30 @@
                     const password = document.getElementById("password").value;
                     document.getElementById("login-result").innerHTML =
                         "Logging in...";
-                    const response = await fetch("/auth/token", {
-                        method: "POST",
-                        body: JSON.stringify({ username, password }),
-                        headers: { "Content-Type": "application/json" },
-                    });
-                    const data = await response.json();
-                    if (response.ok) {
+
+                    try {
+                        const response = await fetch("/auth/token", {
+                            method: "POST",
+                            body: JSON.stringify({ username, password }),
+                            headers: { "Content-Type": "application/json" },
+                        });
+
+                        const data = await response.json();
+                        if (response.ok) {
+                            document.getElementById("login-result").innerHTML =
+                                "Logged in successfully!";
+                            localStorage.setItem(
+                                "access_token",
+                                data.access_token,
+                            ); // Store token in localStorage
+                            window.location.href = "/test.html"; // Redirect to the home page
+                        } else {
+                            document.getElementById("login-result").innerHTML =
+                                `Error: ${data.detail}`;
+                        }
+                    } catch (error) {
                         document.getElementById("login-result").innerHTML =
-                            "Logged in successfully!";
-                        localStorage.setItem("access_token", data.access_token);
-                    } else {
-                        document.getElementById("login-result").innerHTML =
-                            `Error: ${data.detail}`;
+                            `Network Error: ${error.message}`;
                     }
                 });
 
@@ -216,83 +192,29 @@
                         document.getElementById("register-password").value;
                     document.getElementById("register-result").innerHTML =
                         "Registering...";
-                    const response = await fetch("/auth/register", {
-                        method: "POST",
-                        body: JSON.stringify({ username, password }),
-                        headers: { "Content-Type": "application/json" },
-                    });
-                    const data = await response.json();
-                    if (response.ok) {
-                        document.getElementById("register-result").innerHTML =
-                            "Registered successfully! You can now log in.";
-                    } else {
-                        document.getElementById("register-result").innerHTML =
-                            `Error: ${data.detail}`;
-                    }
-                });
 
-            // Handle anime search form submission
-            document
-                .getElementById("anime-search-form")
-                .addEventListener("submit", async (event) => {
-                    event.preventDefault();
-                    const searchTerm =
-                        document.getElementById("search-term").value;
-                    const response = await fetch(
-                        `/anime/search?name=${searchTerm}`,
-                        {
-                            method: "GET",
-                            headers: {
-                                Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-                            },
-                        },
-                    );
-                    const data = await response.json();
-                    const searchResult =
-                        document.getElementById("search-result");
-                    if (response.ok) {
-                        searchResult.innerHTML =
-                            "<strong>Search Results:</strong><br>";
-                        data.forEach((anime) => {
-                            searchResult.innerHTML += `<p>${anime.title.romaji}</p>`;
+                    try {
+                        const response = await fetch("/auth/register", {
+                            method: "POST",
+                            body: JSON.stringify({ username, password }),
+                            headers: { "Content-Type": "application/json" },
                         });
-                    } else {
-                        searchResult.innerHTML = "No results found.";
-                    }
-                });
 
-            // Load recommendations
-            document
-                .getElementById("load-recommendations")
-                .addEventListener("click", async () => {
-                    const loadingIcon = document.getElementById("loading-icon");
-                    loadingIcon.style.display = "inline-block";
-                    const response = await fetch("/anime/recommendations", {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-                        },
-                    });
-                    const data = await response.json();
-                    const animeList = document.getElementById("anime-list");
-                    animeList.innerHTML = "";
-                    if (
-                        data.recommendations &&
-                        data.recommendations.length > 0
-                    ) {
-                        data.recommendations.forEach((anime) => {
-                            const animeCard = document.createElement("div");
-                            animeCard.className = "anime-card fade-in";
-                            animeCard.innerHTML = `
-                            <img src="${anime.coverImage.medium}" alt="${anime.title.romaji}" />
-                            <h3>${anime.title.romaji}</h3>
-                        `;
-                            animeList.appendChild(animeCard);
-                        });
-                    } else {
-                        animeList.innerHTML = "No recommendations found.";
+                        const data = await response.json();
+                        if (response.ok) {
+                            document.getElementById(
+                                "register-result",
+                            ).innerHTML =
+                                "Registered successfully! You can now log in.";
+                        } else {
+                            document.getElementById(
+                                "register-result",
+                            ).innerHTML = `Error: ${data.detail}`;
+                        }
+                    } catch (error) {
+                        document.getElementById("register-result").innerHTML =
+                            `Network Error: ${error.message}`;
                     }
-                    loadingIcon.style.display = "none";
                 });
         </script>
     </body>
