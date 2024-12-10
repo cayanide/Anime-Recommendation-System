@@ -14,10 +14,11 @@ WORKDIR /app
 COPY . /app
 
 # Install dependencies from requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Expose the port that FastAPI will run on
 EXPOSE 8000
 
 # Command to run FastAPI app using Uvicorn
+# Since 'main.py' is inside the 'app' folder, we need to update the path
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
