@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/cayanide/animerecommend:latest
+    image: ghcr.io/cayanide/animerecom:latest
     container_name: animerecommend_app
     ports:
       - "8000:8000"
