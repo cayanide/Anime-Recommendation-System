@@ -61,7 +61,7 @@ app = FastAPI(
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 # Jinja2 Templates for rendering HTML
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 # CORS Middleware
 app.add_middleware(
@@ -73,7 +73,7 @@ app.add_middleware(
 )
 
 # Serve Static Files from templates directory (CSS, JS)
-static_dir = "templates"
+static_dir = "app/templates"
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 else:
@@ -201,7 +201,7 @@ router = APIRouter()
 
 @app.post("/user/", response_model=UserOut)
 async def create_user(user: UserIn) -> UserOut:
-    return use
+    return user
 # Helper function to fetch anime data from AniList API
 #
 
