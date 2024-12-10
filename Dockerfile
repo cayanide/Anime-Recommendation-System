@@ -19,6 +19,8 @@ COPY . /app
 # Install dependencies from requirements.txt
 RUN pip install -r requirements.txt
 RUN pip install pydantic[email]
+RUN pip install python-multipart
+
 # Expose the port that FastAPI will run on
 EXPOSE 8000
 
