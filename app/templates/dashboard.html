@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Dashboard - Anime Recommendation</title>
+        <link rel="stylesheet" href="/static/style.css" />
+    </head>
+    <body class="dashboard-page">
+        <div class="container">
+            <h1>Welcome to the Dashboard!</h1>
+            <p>Your authentication token:</p>
+            <!-- Display the token passed from FastAPI -->
+            <input type="text" id="token" value="{{ token }}" readonly />
+            <span
+                class="eye-icon"
+                id="eye-icon"
+                onclick="toggleTokenVisibility()"
+                >👁️</span
+            >
+
+            <button class="proceed-btn" onclick="proceed()">Proceed</button>
+        </div>
+
+        <script>
+            // Toggle token visibility
+            function toggleTokenVisibility() {
+                const tokenField = document.getElementById("token");
+                const eyeIcon = document.getElementById("eye-icon");
+
+                if (tokenField.type === "password") {
+                    tokenField.type = "text";
+                    eyeIcon.innerHTML = "🙈"; // Change the icon to show the hidden state
+                } else {
+                    tokenField.type = "password";
+                    eyeIcon.innerHTML = "👁️"; // Change the icon back to show the visible state
+                }
+            }
+
+            // Proceed button function (can be modified for further actions)
+            function proceed() {
+                alert("Proceeding with the action!");
+            }
+        </script>
+
+        <script src="/static/script.js"></script>
+    </body>
+</html>

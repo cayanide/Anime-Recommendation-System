@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Recommended Anime</title>
+        <link rel="stylesheet" href="/static/style.css" />
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f9;
+                color: #333;
+                margin: 0;
+                padding: 0;
+            }
+            header {
+                background-color: #4caf50;
+                color: white;
+                padding: 10px 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            header h1 {
+                margin: 0;
+                font-size: 2em;
+            }
+            header a {
+                color: white;
+                text-decoration: none;
+                margin-left: 15px;
+                font-size: 1.1em;
+            }
+            header a:hover {
+                text-decoration: underline;
+            }
+            section {
+                padding: 20px;
+                margin: 20px;
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            footer {
+                background-color: #333;
+                color: white;
+                text-align: center;
+                padding: 10px;
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+            }
+            #recommendations-list {
+                display: none;
+            }
+            #json-response {
+                font-size: 1.2em;
+                background-color: #f0f0f0;
+                padding: 15px;
+                border-radius: 8px;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>Recommendations</h1>
+            <nav>
+                <a href="/">Home</a>
+            </nav>
+        </header>
+
+        <section>
+            <h2>Fetch Recommendations (JSON Response)</h2>
+            <button id="fetch-recommendations">Fetch Recommendations</button>
+            <div id="loading-message" class="loading" style="display: none">
+                Loading recommendations...
+            </div>
+            <div id="json-response" style="display: none"></div>
+            <!-- Section to show raw JSON -->
+        </section>
+
+        <section>
+            <h2>Manage Your Preferences</h2>
+            <form action="/user/preferences" method="post">
+                <label for="favorite-genres"
+                    >Favorite Genres (comma separated):</label
+                >
+                <input
+                    type="text"
+                    id="favorite-genres"
+                    name="favorite_genres"
+                    value="{{ favorite_genres if favorite_genres else '' }}"
+                />
+                <button type="submit">Update Preferences</button>
+            </form>
+            <form
+                action="/user/preferences/remove"
+                method="post"
+                style="margin-top: 10px"
+            ></form>
+        </section>
+
+        <br />
+        <br />
+        <footer>
+            <p>&copy; 2024 Cayanide Labs System. All rights reserved.</p>
+        </footer>
+
+        <script>
+            const userId = "{{ user_id }}"; // Ensure the user_id is properly inserted into the page
+            console.log("User ID:", userId);
+            document
+                .getElementById("fetch-recommendations")
+                .addEventListener("click", function () {
+                    const loadingMessage =
+                        document.getElementById("loading-message");
+                    const jsonResponseContainer =
+                        document.getElementById("json-response");
+
+                    // Show loading message
+                    loadingMessage.style.display = "block";
+
+                    // Hide the JSON container while loading
+                    jsonResponseContainer.style.display = "none";
+
+                    // Ensure user_id is valid before making the API request
+
+                    // Fetch recommendations from the correct API endpoint
+                    fetch("http://127.0.0.1:8000/anime/recommendations", {
+                        method: "GET",
+                        headers: {
+                            accept: "application/json",
+                        },
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            // Display raw JSON response in the #json-response div
+                            jsonResponseContainer.innerText = JSON.stringify(
+                                data,
+                                null,
+                                2,
+                            );
+                            jsonResponseContainer.style.display = "block";
+                        })
+                        .catch((error) => {
+                            console.error(
+                                "Error fetching recommendations:",
+                                error,
+                            );
+                            jsonResponseContainer.innerText =
+                                "Error fetching recommendations. Please try again later.";
+                            jsonResponseContainer.style.display = "block";
+                        })
+                        .finally(() => {
+                            loadingMessage.style.display = "none"; // Hide loading message
+                        });
+                });
+        </script>
+    </body>
+</html>

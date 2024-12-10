@@ -3,91 +3,165 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>User Dashboard</title>
-        <link
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-            rel="stylesheet"
-        />
-        <link rel="stylesheet" href="/static/styles.css" />
+        <title>Anime Recommendation System - Home</title>
+        <link rel="stylesheet" href="/static/style.css" />
+        <script src="/static/script.js" defer></script>
         <style>
-            /* Additional styles for the user dashboard */
-            .user-nav {
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f9;
+                color: #333;
+                margin: 0;
+                padding: 0;
+            }
+            header {
+                background-color: #4caf50;
+                color: white;
+                padding: 10px 20px;
                 display: flex;
                 justify-content: space-between;
-                background-color: #333;
-                color: #fff;
-                padding: 10px;
-            }
-            .user-nav ul {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-                display: flex;
-            }
-            .user-nav ul li {
-                margin: 0 15px;
-            }
-            .user-nav ul li a {
-                color: #fff;
-                text-decoration: none;
-            }
-            .user-nav .user-info {
-                display: flex;
                 align-items: center;
+            }
+            header h1 {
+                margin: 0;
+                font-size: 2em;
+            }
+            nav a {
+                color: white;
+                text-decoration: none;
+                margin-left: 15px;
+                font-size: 1.1em;
+            }
+            nav a:hover {
+                text-decoration: underline;
+            }
+            header button {
+                background-color: #ff4d4d;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                cursor: pointer;
+                font-size: 1em;
+                border-radius: 5px;
+            }
+            header button:hover {
+                background-color: #e60000;
+            }
+            section {
+                padding: 20px;
+                margin: 20px;
+                background-color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            footer {
+                background-color: #333;
+                color: white;
+                text-align: center;
+                padding: 10px;
+                position: fixed;
+                bottom: 0;
+                width: 100%;
             }
         </style>
     </head>
     <body>
-        <div class="app-container">
-            <!-- Top Navigation Bar -->
-            <nav class="user-nav">
-                <ul>
-                    <li><a href="/home.html" class="active">Home</a></li>
-                    <li><a href="/anime/search">Search Anime</a></li>
-                    <li><a href="/user/preferences">Preferences</a></li>
-                    <li><a href="/user/search-history">Search History</a></li>
-                </ul>
-                <div class="user-info">
-                    <span>Hello, {{ user.username }}</span>
-                    <a href="/logout">Logout</a>
-                </div>
+        <header>
+            <h1>Welcome, {{ user }}</h1>
+            <nav>
+                <a href="/recommendations">Recommended Anime</a>
+                <form action="/logout" method="get" style="display: inline">
+                    <button type="submit">Logout</button>
+                </form>
             </nav>
+        </header>
 
-            <!-- Anime Recommendations Section -->
-            <div class="section-container">
-                <h2>Your Recommendations</h2>
+        <section>
+            <h2>Search for Anime</h2>
+            <form
+                id="search-form"
+                method="get"
+                onsubmit="event.preventDefault(); fetchSearchResults()"
+            >
+                <input
+                    type="text"
+                    id="search-query"
+                    name="query"
+                    placeholder="Enter anime name"
+                    required
+                />
+                <button type="submit">Search</button>
+            </form>
+            <div id="search-results">
+                <!-- Search results will be displayed here -->
+                {% if search_results %}
                 <ul>
-                    {% for anime in recommendations %}
-                    <li>{{ anime.title }}</li>
-                    {% else %}
-                    <li>No recommendations available.</li>
+                    {% for anime in search_results %}
+                    <li>
+                        <!-- Check if cover image exists, otherwise use a placeholder -->
+                        {% if anime.coverImage %}
+                        <img
+                            src="{{ anime.coverImage.large }}"
+                            alt="{{ anime.title.romaji }} cover"
+                        />
+                        {% else %}
+                        <img
+                            src="/static/default-cover.jpg"
+                            alt="No cover available"
+                        />
+                        {% endif %}
+                        <p>
+                            <!-- Check if the title exists, otherwise display a fallback message -->
+                            {% if anime.title %} {{ anime.title.romaji }} {%
+                            else %} Title not available {% endif %}
+                        </p>
+                    </li>
                     {% endfor %}
                 </ul>
+                {% else %}
+                <p>No search results found.</p>
+                {% endif %}
             </div>
+        </section>
 
-            <!-- User Preferences Section -->
-            <div class="section-container">
-                <h2>Your Preferences</h2>
-                <ul>
-                    {% for preference in preferences %}
-                    <li>{{ preference }}</li>
-                    {% else %}
-                    <li>No preferences set.</li>
-                    {% endfor %}
-                </ul>
-            </div>
+        <footer>
+            <p>&copy; 2024 Cayanide Labs System. All rights reserved.</p>
+        </footer>
 
-            <!-- Search History Section -->
-            <div class="section-container">
-                <h2>Your Search History</h2>
-                <ul>
-                    {% for search in search_history %}
-                    <li>{{ search }}</li>
-                    {% else %}
-                    <li>No search history available.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
+        <script>
+            async function fetchSearchResults() {
+                const query = document.getElementById("search-query").value;
+                const response = await fetch(`/search?query=${query}`);
+                const data = await response.json();
+
+                const searchResultsDiv =
+                    document.getElementById("search-results");
+                searchResultsDiv.innerHTML = ""; // Clear previous results
+
+                if (data.searchResults && data.searchResults.length > 0) {
+                    const ul = document.createElement("ul");
+                    data.searchResults.forEach((anime) => {
+                        const li = document.createElement("li");
+
+                        const coverImage = anime.coverImage
+                            ? anime.coverImage.large
+                            : "/static/default-cover.jpg";
+                        const title = anime.title
+                            ? anime.title.romaji
+                            : "Title not available";
+
+                        li.innerHTML = `
+                            <img src="${coverImage}" alt="${title} cover" />
+                            <p>${title}</p>
+                        `;
+                        ul.appendChild(li);
+                    });
+                    searchResultsDiv.appendChild(ul);
+                } else {
+                    searchResultsDiv.innerHTML =
+                        "<p>No search results found.</p>";
+                }
+            }
+        </script>
     </body>
 </html>

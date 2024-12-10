@@ -3,219 +3,41 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Anime Recommendation System</title>
-        <link
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-            rel="stylesheet"
-        />
-        <link rel="stylesheet" href="/static/styles.css" />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
-            rel="stylesheet"
-        />
-        <style>
-            /* Additional animations and transitions */
-            .fade-in {
-                animation: fadeIn 0.5s ease-in-out;
-            }
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                }
-                to {
-                    opacity: 1;
-                }
-            }
-
-            /* Hidden class for toggling sections */
-            .hidden {
-                display: none;
-            }
-        </style>
+        <title>Login - Anime Recommendation</title>
+        <!-- Use the /static/ path to access the static files -->
+        <link rel="stylesheet" href="/static/style.css" />
+        <script src="/static/script.js"></script>
     </head>
-    <body>
-        <div class="app-container fade-in">
-            <nav class="navbar">
-                <ul>
-                    <li>
-                        <a href="#" id="login-link" class="active">Login</a>
-                    </li>
-                    <li><a href="#" id="register-link">Register</a></li>
-                </ul>
-            </nav>
+    <body class="login-page">
+        <div class="container">
+            <h1>Login to Your Account</h1>
+            <form action="/login" method="POST" id="login-form">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required />
 
-            <!-- Login Section -->
-            <div id="login-section" class="section-container fade-in">
-                <h2 class="section-title">
-                    Login <i class="fas fa-sign-in-alt"></i>
-                </h2>
-                <form id="login-form" class="form-card">
-                    <div class="input-field">
-                        <label for="username">Username:</label>
-                        <input
-                            type="text"
-                            id="username"
-                            name="username"
-                            required
-                        />
-                    </div>
-                    <div class="input-field">
-                        <label for="password">Password:</label>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            required
-                        />
-                    </div>
-                    <div class="input-field">
-                        <button type="submit" class="btn-submit">Login</button>
-                    </div>
-                </form>
-                <div id="login-result" class="login-result"></div>
-            </div>
+                <label for="password">Password:</label>
+                <div class="password-container">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                    />
+                    <span
+                        class="eye-icon"
+                        id="eye-icon"
+                        onclick="togglePassword()"
+                        >👁️</span
+                    >
+                </div>
 
-            <!-- Registration Section -->
-            <div id="register-section" class="section-container fade-in hidden">
-                <h2 class="section-title">
-                    Register <i class="fas fa-user-plus"></i>
-                </h2>
-                <form id="register-form" class="form-card">
-                    <div class="input-field">
-                        <label for="register-username">Username:</label>
-                        <input
-                            type="text"
-                            id="register-username"
-                            name="username"
-                            required
-                        />
-                    </div>
-                    <div class="input-field">
-                        <label for="register-password">Password:</label>
-                        <input
-                            type="password"
-                            id="register-password"
-                            name="password"
-                            required
-                        />
-                    </div>
-                    <div class="input-field">
-                        <button type="submit" class="btn-submit">
-                            Register
-                        </button>
-                    </div>
-                </form>
-                <div id="register-result" class="register-result"></div>
-            </div>
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+
+            <p>Don't have an account? <a href="/register">Register here</a></p>
         </div>
 
-        <script>
-            // Toggle between login and register sections
-            document
-                .getElementById("login-link")
-                .addEventListener("click", () => {
-                    document
-                        .getElementById("login-section")
-                        .classList.remove("hidden");
-                    document
-                        .getElementById("register-section")
-                        .classList.add("hidden");
-                    document
-                        .getElementById("login-link")
-                        .classList.add("active");
-                    document
-                        .getElementById("register-link")
-                        .classList.remove("active");
-                });
-
-            document
-                .getElementById("register-link")
-                .addEventListener("click", () => {
-                    document
-                        .getElementById("login-section")
-                        .classList.add("hidden");
-                    document
-                        .getElementById("register-section")
-                        .classList.remove("hidden");
-                    document
-                        .getElementById("login-link")
-                        .classList.remove("active");
-                    document
-                        .getElementById("register-link")
-                        .classList.add("active");
-                });
-
-            // Handle login form submission
-            document
-                .getElementById("login-form")
-                .addEventListener("submit", async (event) => {
-                    event.preventDefault();
-                    const username = document.getElementById("username").value;
-                    const password = document.getElementById("password").value;
-                    document.getElementById("login-result").innerHTML =
-                        "Logging in...";
-
-                    try {
-                        const response = await fetch("/auth/token", {
-                            method: "POST",
-                            body: JSON.stringify({ username, password }),
-                            headers: { "Content-Type": "application/json" },
-                        });
-
-                        const data = await response.json();
-                        if (response.ok) {
-                            document.getElementById("login-result").innerHTML =
-                                "Logged in successfully!";
-                            localStorage.setItem(
-                                "access_token",
-                                data.access_token,
-                            ); // Store token in localStorage
-                            window.location.href = "/test.html"; // Redirect to the home page
-                        } else {
-                            document.getElementById("login-result").innerHTML =
-                                `Error: ${data.detail}`;
-                        }
-                    } catch (error) {
-                        document.getElementById("login-result").innerHTML =
-                            `Network Error: ${error.message}`;
-                    }
-                });
-
-            // Handle registration form submission
-            document
-                .getElementById("register-form")
-                .addEventListener("submit", async (event) => {
-                    event.preventDefault();
-                    const username =
-                        document.getElementById("register-username").value;
-                    const password =
-                        document.getElementById("register-password").value;
-                    document.getElementById("register-result").innerHTML =
-                        "Registering...";
-
-                    try {
-                        const response = await fetch("/auth/register", {
-                            method: "POST",
-                            body: JSON.stringify({ username, password }),
-                            headers: { "Content-Type": "application/json" },
-                        });
-
-                        const data = await response.json();
-                        if (response.ok) {
-                            document.getElementById(
-                                "register-result",
-                            ).innerHTML =
-                                "Registered successfully! You can now log in.";
-                        } else {
-                            document.getElementById(
-                                "register-result",
-                            ).innerHTML = `Error: ${data.detail}`;
-                        }
-                    } catch (error) {
-                        document.getElementById("register-result").innerHTML =
-                            `Network Error: ${error.message}`;
-                    }
-                });
-        </script>
+        <!-- JS File Reference -->
+        <script src="static/script.js"></script>
     </body>
 </html>

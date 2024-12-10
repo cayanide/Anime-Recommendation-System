@@ -1,0 +1,188 @@
+/* General Styles */
+body {
+    font-family: "Arial", sans-serif;
+    background: #111;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 20px;
+    background: linear-gradient(45deg, #0f0c29, #302b63, #24243e);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+/* Header */
+h1 {
+    font-size: 2rem;
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+/* Form */
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    background: #444;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+}
+
+button {
+    background: #6a1b9a;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #fff;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background: #8e24aa;
+}
+
+/* Password container */
+.password-container {
+    position: relative;
+}
+
+.eye-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #aaa;
+}
+
+/* Token display */
+#token {
+    background: #444;
+    padding: 10px;
+    margin: 10px 0;
+    color: #fff;
+    border-radius: 5px;
+    width: 80%;
+    text-align: center;
+}
+
+.proceed-btn {
+    background: #00bcd4;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #fff;
+}
+
+.proceed-btn:hover {
+    background: #00acc1;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.container {
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+header {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2em;
+}
+
+button {
+    padding: 10px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #e53935;
+}
+
+section {
+    margin: 20px;
+}
+
+#anime-recommendations {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#anime-recommendations div {
+    width: 150px;
+    margin: 10px;
+    text-align: center;
+}
+
+#search-results {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#search-results div {
+    width: 150px;
+    margin: 10px;
+    text-align: center;
+}
+
+/* Optional Styling for Anime and Search Results */
+.anime-card,
+.result-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px;
+    width: 150px;
+    text-align: center;
+}
+
+.anime-card img,
+.result-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.anime-card h3,
+.result-card h3 {
+    font-size: 1.1em;
+    margin-top: 10px;
+}
+
+#search-results,
+#anime-recommendations {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
