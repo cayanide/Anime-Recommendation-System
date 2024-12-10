@@ -16,13 +16,13 @@ from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from dotenv import load_dotenv
-from database.models import User
-from database.models import UserBase
-from database.models import UserPreferences
-from database.models import UserOut
-from database.models import UserIn
+from app.database.models import User
+from app.database.models import UserBase
+from app.database.models import UserPreferences
+from app.database.models import UserOut
+from app.database.models import UserIn
 from passlib.context import CryptContext
-from auth.services import create_user
+from app.auth.services import create_user
 import httpx
 from fastapi import APIRouter
 from sqlalchemy.orm import Session

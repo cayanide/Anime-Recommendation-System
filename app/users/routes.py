@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.sql import update
 from utils.token import decode_access_token
-from database import get_db
-from database.models import User
-from users.schemas import UserPreferences
-from auth.dependencies import get_current_user
+from app.database import get_db
+from app.database.models import User
+from app.users.schemas import UserPreferences
+from app.auth.dependencies import get_current_user
 
 user_router = APIRouter()
 

@@ -1,6 +1,6 @@
 # app/auth/services.py
-from database.models import User
-from database.config import async_session
+from app.database.models import User
+from app.database.config import async_session
 from passlib.context import CryptContext
 from sqlalchemy.future import select
 

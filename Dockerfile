@@ -10,12 +10,15 @@ RUN apt-get update && apt-get install -y \
 # Set the working directory inside the container
 WORKDIR /app
 
+
 # Copy the current directory contents into the container
 COPY . /app
 
-# Install dependencies from requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
 
+
+# Install dependencies from requirements.txt
+RUN pip install -r requirements.txt
+RUN pip install pydantic[email]
 # Expose the port that FastAPI will run on
 EXPOSE 8000
 
