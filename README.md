@@ -166,7 +166,8 @@ Login page
 
 Registration Page
 
-![image](https://github.com/user-attachments/assets/fc11820c-31fd-46aa-a7b1-21c4bc7aad43)
+![image](https://github.com/user-attachments/assets/dcc76b34-fae6-4380-96d4-8a7b885d9dfc)
+
 
 Token Generated Page (Only For Debugging Disable in Production)
 
@@ -176,7 +177,7 @@ Search Page
 
 ![image](https://github.com/user-attachments/assets/c412e663-a8f1-4c0c-94d2-15302575e44b)
 
-Reccomendation Page 
+Recommendation Page 
 
 ![image](https://github.com/user-attachments/assets/a55b4e79-ec3c-425d-a535-14755d828d46)
 
