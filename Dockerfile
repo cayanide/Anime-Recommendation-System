@@ -1,29 +1,20 @@
-# Use the official Python image
-FROM python:3.10-slim
-
-# Install build dependencies for psycopg2 (and other dependencies that require compilation)
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Use an official Python runtime as a parent image
+FROM python:3.11-slim
 
 # Set the working directory inside the container
 WORKDIR /app
 
+# Copy the requirements.txt file first for efficient caching
+COPY requirements.txt .
 
-# Copy the current directory contents into the container
-COPY . /app
+# Install the dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy the rest of the application code into the container
+COPY . .
 
-
-# Install dependencies from requirements.txt
-RUN pip install -r requirements.txt
-RUN pip install pydantic[email]
-RUN pip install python-multipart
-
-# Expose the port that FastAPI will run on
+# Expose the port that your application will run on (if applicable)
 EXPOSE 8000
 
-# Command to run FastAPI app using Uvicorn
-# Since 'main.py' is inside the 'app' folder, we need to update the path
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the application using the given command
+CMD ["python3", "-m", "app.main"]
