@@ -169,7 +169,7 @@ Registration Page
 ![image](https://github.com/user-attachments/assets/dcc76b34-fae6-4380-96d4-8a7b885d9dfc)
 
 
-Token Generated Page (Only For Debugging Disable in Production)
+Token Generated Page JWT Token (Only For Debugging Disable in Production)
 
 ![image](https://github.com/user-attachments/assets/1943b9ec-218d-4788-8849-210cc9dac32e)
 
