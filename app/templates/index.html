@@ -3,41 +3,225 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Login - Anime Recommendation</title>
-        <!-- Use the /static/ path to access the static files -->
-        <link rel="stylesheet" href="/static/style.css" />
-        <script src="/static/script.js"></script>
-    </head>
-    <body class="login-page">
-        <div class="container">
-            <h1>Login to Your Account</h1>
-            <form action="/login" method="POST" id="login-form">
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required />
+        <title>Login/Register</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                background: linear-gradient(to right, #6a11cb, #2575fc);
+            }
 
-                <label for="password">Password:</label>
-                <div class="password-container">
+            .container {
+                width: 400px;
+                height: 500px;
+                position: relative;
+                background: #fff;
+                border-radius: 10px;
+                box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+
+            .forms {
+                position: absolute;
+                display: flex;
+                width: 200%;
+                height: 100%;
+                transition: transform 0.5s ease-in-out;
+            }
+
+            .form {
+                width: 50%;
+                padding: 40px;
+                box-sizing: border-box;
+            }
+
+            .form h2 {
+                margin: 0 0 20px;
+                color: #333;
+            }
+
+            .form input {
+                width: 100%;
+                padding: 10px;
+                margin-bottom: 20px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+            }
+
+            .form button {
+                width: 100%;
+                padding: 10px;
+                background: #2575fc;
+                border: none;
+                color: #fff;
+                border-radius: 5px;
+                font-size: 16px;
+                cursor: pointer;
+            }
+
+            .form button:hover {
+                background: #6a11cb;
+            }
+
+            .toggle-btn {
+                position: absolute;
+                bottom: 20px;
+                width: 100%;
+                text-align: center;
+                cursor: pointer;
+                color: #2575fc;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="forms" id="forms">
+                <!-- Login Form -->
+                <div class="form" id="login-form">
+                    <h2>Login</h2>
                     <input
-                        type="password"
-                        id="password"
-                        name="password"
+                        type="email"
+                        id="login-username"
+                        placeholder="Email"
                         required
                     />
-                    <span
-                        class="eye-icon"
-                        id="eye-icon"
-                        onclick="togglePassword()"
-                        >👁️</span
-                    >
+                    <input
+                        type="password"
+                        id="login-password"
+                        placeholder="Password"
+                        required
+                    />
+                    <button onclick="submitLogin()">Login</button>
                 </div>
 
-                <button type="submit" class="submit-btn">Login</button>
-            </form>
+                <!-- Register Form -->
+                <div class="form" id="register-form">
+                    <h2>Register</h2>
+                    <input
+                        type="text"
+                        id="register-username"
+                        placeholder="Username"
+                        required
+                    />
+                    <input
+                        type="email"
+                        id="register-email"
+                        placeholder="Email"
+                        required
+                    />
+                    <input
+                        type="password"
+                        id="register-password"
+                        placeholder="Password"
+                        required
+                    />
+                    <button onclick="submitRegister()">Register</button>
+                </div>
+            </div>
 
-            <p>Don't have an account? <a href="/register">Register here</a></p>
+            <div class="toggle-btn" onclick="toggleForms()">
+                <span id="toggle-text">Don’t have an account? Register</span>
+            </div>
         </div>
 
-        <!-- JS File Reference -->
-        <script src="static/script.js"></script>
+        <script>
+            const forms = document.getElementById("forms");
+            const toggleText = document.getElementById("toggle-text");
+
+            function toggleForms() {
+                if (forms.style.transform === "translateX(-50%)") {
+                    forms.style.transform = "translateX(0)";
+                    toggleText.textContent = "Don’t have an account? Register";
+                } else {
+                    forms.style.transform = "translateX(-50%)";
+                    toggleText.textContent = "Already have an account? Login";
+                }
+            }
+
+            // Redirect to dashboard after login
+            function submitLogin() {
+                const username =
+                    document.getElementById("login-username").value;
+                const password =
+                    document.getElementById("login-password").value;
+
+                fetch("/auth/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: new URLSearchParams({
+                        username: username,
+                        password: password,
+                        scope: "",
+                        client_id: "string", // Replace with your actual client_id if needed
+                        client_secret: "string", // Replace with your actual client_secret if needed
+                    }),
+                })
+                    .then((response) => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            alert("Login failed.");
+                            throw new Error("Login failed");
+                        }
+                    })
+                    .then((data) => {
+                        if (data.access_token) {
+                            localStorage.setItem("token", data.access_token);
+
+                            // After successfully logging in, fetch the dashboard data
+                            fetch("/dashboard/data", {
+                                method: "GET",
+                                headers: {
+                                    Authorization:
+                                        "Bearer " +
+                                        localStorage.getItem("token"),
+                                    accept: "application/json",
+                                },
+                            })
+                                .then((response) => response.json())
+                                .then((data) => {
+                                    console.log(data);
+                                    window.location.href = "/dashboard";
+                                    // You can use the data to render parts of the dashboard
+                                })
+                                .catch((error) => {
+                                    console.error("Error:", error);
+                                    alert("Failed to fetch dashboard data.");
+                                });
+                        } else {
+                            alert("Login failed.");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error:", error);
+                    });
+            }
+
+            function submitRegister() {
+                const username =
+                    document.getElementById("register-username").value;
+                const email = document.getElementById("register-email").value;
+                const password =
+                    document.getElementById("register-password").value;
+
+                fetch("/auth/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, email, password }),
+                }).then((response) => {
+                    if (response.ok) {
+                        alert("Registration successful!");
+                    } else {
+                        alert("Registration failed.");
+                    }
+                });
+            }
+        </script>
     </body>
 </html>

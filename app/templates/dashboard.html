@@ -3,46 +3,287 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Dashboard - Anime Recommendation</title>
-        <link rel="stylesheet" href="/static/style.css" />
-    </head>
-    <body class="dashboard-page">
-        <div class="container">
-            <h1>Welcome to the Dashboard!</h1>
-            <p>Your authentication token:</p>
-            <!-- Display the token passed from FastAPI -->
-            <input type="text" id="token" value="{{ token }}" readonly />
-            <span
-                class="eye-icon"
-                id="eye-icon"
-                onclick="toggleTokenVisibility()"
-                >👁️</span
-            >
+        <title>Dashboard</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            /* General Body Styles */
+            body {
+                font-family: "Roboto", sans-serif;
+                margin: 0;
+                padding: 0;
+                background: linear-gradient(45deg, #6a11cb, #2575fc);
+                background-size: 400% 400%;
+                animation: gradientShift 15s ease infinite;
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
 
-            <button class="proceed-btn" onclick="proceed()">Proceed</button>
-        </div>
-
-        <script>
-            // Toggle token visibility
-            function toggleTokenVisibility() {
-                const tokenField = document.getElementById("token");
-                const eyeIcon = document.getElementById("eye-icon");
-
-                if (tokenField.type === "password") {
-                    tokenField.type = "text";
-                    eyeIcon.innerHTML = "🙈"; // Change the icon to show the hidden state
-                } else {
-                    tokenField.type = "password";
-                    eyeIcon.innerHTML = "👁️"; // Change the icon back to show the visible state
+            @keyframes gradientShift {
+                0% {
+                    background-position: 0% 50%;
+                }
+                50% {
+                    background-position: 100% 50%;
+                }
+                100% {
+                    background-position: 0% 50%;
                 }
             }
 
-            // Proceed button function (can be modified for further actions)
-            function proceed() {
-                alert("Proceeding with the action!");
+            /* Navbar Styles */
+            .navbar {
+                background-color: rgba(37, 117, 252, 0.8);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px 30px;
+                color: #fff;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .navbar .username {
+                font-size: 18px;
+                font-weight: 500;
+            }
+
+            .navbar .logout-btn {
+                background-color: #6a11cb;
+                border: none;
+                color: #fff;
+                font-size: 16px;
+                padding: 12px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+
+            .navbar .logout-btn:hover {
+                background-color: #4a0d8e;
+            }
+
+            /* Dashboard Container Styles */
+            .container {
+                background: rgba(255, 255, 255, 0.9);
+                width: 100%;
+                max-width: 500px;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                margin-top: 80px;
+                animation: fadeIn 1s ease-out;
+            }
+
+            /* Animation for Fade-In */
+            @keyframes fadeIn {
+                0% {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .container h2 {
+                margin-bottom: 20px;
+                font-size: 26px;
+                color: #333;
+            }
+
+            /* Token Container Styles */
+            .token-container {
+                position: relative;
+                margin-bottom: 20px;
+            }
+
+            .token-field {
+                width: 100%;
+                padding: 15px;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                font-size: 16px;
+                background-color: #f9f9f9;
+                text-align: center;
+                cursor: pointer;
+                user-select: none;
+                color: #333;
+                resize: none;
+                transition: all 0.3s ease;
+                min-height: 40px;
+                overflow: hidden;
+                word-wrap: break-word;
+            }
+
+            .token-field:focus {
+                border-color: #2575fc;
+                box-shadow: 0 0 5px rgba(37, 117, 252, 0.3);
+            }
+
+            /* Eye Icon Styles */
+            .eye-icon {
+                position: absolute;
+                top: 50%;
+                right: 10px;
+                transform: translateY(-50%);
+                font-size: 20px;
+                cursor: pointer;
+                color: #2575fc;
+                transition: color 0.3s ease;
+            }
+
+            .eye-icon:hover {
+                color: #6a11cb;
+            }
+
+            .eye-icon.visible {
+                color: #6a11cb;
+            }
+
+            /* Button Styles */
+            .next-btn {
+                margin-top: 20px;
+                padding: 12px 20px;
+                background-color: #2575fc;
+                border: none;
+                color: white;
+                font-size: 16px;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+
+            .next-btn:hover {
+                background-color: #6a11cb;
+            }
+
+            /* Text and Spacing Adjustments */
+            .logout-btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+
+            .token-container p {
+                font-size: 14px;
+                color: #666;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Navbar -->
+        <div class="navbar">
+            <div class="username" id="navbar-username">Welcome, User!</div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Dashboard Container -->
+        <div class="container">
+            <h2 id="welcome-message">Welcome, User!</h2>
+
+            <div class="token-container">
+                <input
+                    id="token-field"
+                    class="token-field"
+                    value="************"
+                    readonly
+                />
+                <span
+                    class="eye-icon"
+                    id="eye-icon"
+                    onclick="toggleTokenVisibility()"
+                    >👁️</span
+                >
+                <p>Click the eye icon to reveal your token.</p>
+            </div>
+
+            <button class="next-btn" onclick="navigateToHomePage()">
+                Go to Home
+            </button>
+        </div>
+
+        <script>
+            window.onload = function () {
+                // Fetch user data when the page loads
+                async function getUserData() {
+                    const token = localStorage.getItem("token"); // Retrieve token from localStorage
+                    if (!token) {
+                        alert("No token found! Please log in again.");
+                        window.location.href = "index.html"; // Redirect if no token is available
+                        return;
+                    }
+
+                    const response = await fetch(
+                        "http://localhost:8000/dashboard/data",
+                        {
+                            method: "GET",
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        },
+                    );
+
+                    if (!response.ok) {
+                        alert("Failed to fetch user data!");
+                        return;
+                    }
+
+                    const data = await response.json();
+                    console.log(data); // Handle the user data
+
+                    // Display the username in the welcome message
+                    document.getElementById("welcome-message").innerText =
+                        `Welcome, ${data.user.username}!`;
+                    document.getElementById("token-field").value = token; // Display the token
+                    document.getElementById("navbar-username").innerText =
+                        `Welcome, ${data.user.username}`; // Navbar username
+                }
+
+                // Call getUserData when the page loads
+                getUserData();
+
+                // Handle the username from localStorage if it exists
+                const username = localStorage.getItem("username"); // Assuming the username is stored in localStorage
+                if (username) {
+                    document.getElementById("navbar-username").innerText =
+                        `Welcome, ${username}`;
+                } else {
+                    document.getElementById("navbar-username").innerText =
+                        "Welcome, Guest";
+                }
+            };
+
+            function toggleTokenVisibility() {
+                const tokenField = document.getElementById("token-field");
+                const eyeIcon = document.getElementById("eye-icon");
+
+                // Toggle the visibility of the token value
+                if (tokenField.value === "************") {
+                    tokenField.value = localStorage.getItem("token"); // Replace with real token value
+                    eyeIcon.classList.add("visible"); // Change eye icon to indicate visibility
+                } else {
+                    tokenField.value = "************"; // Hide the token
+                    eyeIcon.classList.remove("visible"); // Change eye icon to indicate hidden
+                }
+            }
+
+            function logout() {
+                localStorage.removeItem("token"); // Clear the token from localStorage
+                window.location.href = "/"; // Redirect to homepage (login page)
+            }
+
+            function navigateToHomePage() {
+                window.location.href = "home.html"; // Navigate to the homepage (make sure home.html exists)
             }
         </script>
-
-        <script src="/static/script.js"></script>
     </body>
 </html>

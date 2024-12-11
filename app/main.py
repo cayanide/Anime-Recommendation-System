@@ -1,242 +1,212 @@
-#app/main.py
-from sqlalchemy.orm import sessionmaker
-import os
-import secrets
-import jwt
-from fastapi import FastAPI, Form, Request, HTTPException, status, Query
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from starlette.middleware.sessions import SessionMiddleware
-from sqlalchemy import create_engine, Column, Integer, String
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+from sqlalchemy import create_engine, Column, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from dotenv import load_dotenv
-from app.database.models import User
-from app.database.models import UserBase
-from app.database.models import UserPreferences
-from app.database.models import UserOut
-from app.database.models import UserIn
+from sqlalchemy.orm import sessionmaker, Session
 from passlib.context import CryptContext
-from app.auth.services import create_user
-import httpx
-from fastapi import APIRouter
-from sqlalchemy.orm import Session
-from fastapi import Depends
+from jose import jwt, JWTError
+from datetime import datetime, timedelta
+import os
+from dotenv import load_dotenv
+import requests
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-# Load environment variables from the .env file
+# Load environment variables
 load_dotenv()
 
-# Get the values from the .env file
-db_user = os.getenv("DB_USER")
-db_password = os.getenv("DB_PASSWORD")
-db_host = os.getenv("DB_HOST")
-db_port = os.getenv("DB_PORT")
-db_name = os.getenv("DB_NAME")
+# Configurations
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = 45
+DATABASE_URL = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:5432/{os.getenv('DB_NAME')}"
+ANILIST_CLIENT_ID = os.getenv("ANILIST_CLIENT_ID")
+ANILIST_CLIENT_SECRET = os.getenv("ANILIST_CLIENT_SECRET")
+REDIRECT_URL = os.getenv("REDIRECT_URL")
 
-# Construct the DATABASE_URL
-DATABASE_URL = f"postgresql+asyncpg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-
-# Initialize the database connection for async operations
-engine = create_async_engine(DATABASE_URL, echo=True, future=True)
-AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+# Database setup
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# JWT Secret and Algorithm
-SECRET_KEY = secrets.token_urlsafe(32)  # Random secret key for JWT
-ALGORITHM = "HS256"  # JWT algorithm
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Initialize FastAPI application
-app = FastAPI(
-    title="Anime Recommendation System",
-    description="A REST API to manage anime recommendations, search, and user preferences using AniList API.",
-    version="1.0.0",
-)
+# Models
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    preferences = Column(Text, nullable=True)
 
-# Add SessionMiddleware with the generated secret key
-app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+Base.metadata.create_all(bind=engine)
 
-# Jinja2 Templates for rendering HTML
-templates = Jinja2Templates(directory="app/templates")
+# Pydantic models
+class UserCreate(BaseModel):
+    username: str
+    password: str
 
-# CORS Middleware
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class Preferences(BaseModel):
+    favorite_genres: list[str]
+
+# FastAPI app setup
+app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Update to specific origins in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Serve Static Files from templates directory (CSS, JS)
-static_dir = "app/templates"
-if os.path.exists(static_dir):
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
-else:
-    print(f"Error: The static directory '{static_dir}' does not exist.")
+# Jinja2 Templates setup
+templates = Jinja2Templates(directory="app/templates")
 
-async def get_db():
-    async with AsyncSessionLocal() as db:
+# OAuth2 PasswordBearer for token retrieval
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+def get_db():
+    db = SessionLocal()
+    try:
         yield db
+    finally:
+        db.close()
 
-@app.get("/users/{user_id}", response_model=UserBase)
-async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
-    # Ensure async session is being used correctly
-    result = await db.execute(select(User).filter(User.id == user_id))
-    user = result.scalars().first()
+# Password hashing
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
 
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+def get_password_hash(password):
+    return pwd_context.hash(password)
 
-    # Convert SQLAlchemy object to Pydantic model before returning
-    return UserBase.from_orm(user)
+# Token generation
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+# Dependency for getting the current user from the token
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
 
-@app.post("/user/", response_model=UserOut)
-async def create_user(user: UserIn, db: AsyncSession = Depends(get_db)):
-    # Create a new user and save it to the database
-    db_user = User(username=user.username, hashed_password=user.password)  # Adjust this line according to your model
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
+        if username is None:
+            raise HTTPException(status_code=401, detail="Could not validate credentials")
 
-    # Return the created user as a Pydantic model
-    return UserOut.from_orm(db_user)
-# Create database tables on startup (asynchronously)
-@app.on_event("startup")
-async def startup_event():
-    async with engine.begin() as conn:
-        # This will create all tables
-        await conn.run_sync(Base.metadata.create_all)
+        user = db.query(User).filter(User.username == username).first()
+        if user is None:
+            raise HTTPException(status_code=401, detail="User not found")
 
-# Root route for landing page
-@app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
+        return user
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# Helper function to query AniList's GraphQL API
+def aniList_graphql(query: str, variables: dict = None):
+    url = "https://graphql.anilist.co"
+    headers = {"Content-Type": "application/json"}
+
+    payload = {
+        "query": query,
+        "variables": variables or {}
+    }
+
+    # Log the query and variables for debugging
+    print("Sending request to AniList API:")
+    print("Query:", query)
+    print("Variables:", variables)
+
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()  # Raise an HTTPError for bad responses
+        return response.json()  # Return the JSON response if successful
+    except requests.exceptions.RequestException as e:
+        # Log the error for debugging
+        print(f"Error making request to AniList API: {e}")
+        return None  # Return None if the request fails
+
+# GraphQL query for searching anime
+def search_anime_query(query: str):
+    return """
+    query ($search: String) {
+      Page(page: 1, perPage: 10) {
+        media(search: $search, type: ANIME) {
+          id
+          title {
+            romaji
+            english
+            native
+          }
+          coverImage {
+            large
+          }
+        }
+      }
+    }
+    """
+
+# GraphQL query for fetching recommendations
+
+# Routes
+@app.get("/")
+def get_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# Function to verify credentials
-async def verify_credentials(db, username: str, password: str):
-    # Fetch user from the database
-    stmt = select(User).filter(User.username == username)
-    result = await db.execute(stmt)
-    user = result.scalars().first()
+@app.post("/auth/register", response_model=Token)
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == user.username).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    hashed_password = get_password_hash(user.password)
+    new_user = User(username=user.username, hashed_password=hashed_password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    access_token = create_access_token(data={"sub": new_user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
 
-    if user and pwd_context.verify(password, user.hashed_password):  # Use hashed_password here
-        return user
-    return None
+@app.post("/auth/login", response_model=Token)
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Invalid credentials")
 
-# Function to generate a JWT token
-def create_token(user_id: int, username: str):
-    payload = {"sub": username, "user_id": user_id}
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    return token
+    access_token = create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
 
-# Login route (with session handling)
-@app.post("/login")
-async def login(request: Request, username: str = Form(...), password: str = Form(...)):
-    async with AsyncSessionLocal() as db:
-        # Check if user credentials are valid by querying the PostgreSQL database
-        user = await verify_credentials(db, username, password)
+# Anime Search Route
+@app.get("/anime/search")
+async def search_anime(request: Request, query: str):
+    graphql_query = search_anime_query(query)
+    response = aniList_graphql(graphql_query, {"search": query})
+    search_results = response.get("data", {}).get("Page", {}).get("media", [])
+    return {"searchResults": search_results}
 
-        if user:
-            # Generate JWT token
-            token = create_token(user.id, user.username)
-
-            # Store user info and token in session
-            request.session["user"] = user.username
-            request.session["token"] = token
-
-            return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
-        else:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-
-# Dashboard route (after login)
-@app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    user = request.session.get("user")
-    token = request.session.get("token")  # Retrieve the token from the session
-
-    if user and token:
-        return templates.TemplateResponse("dashboard.html", {"request": request, "token": token})
-    else:
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-
-# Logout route to clear the session
-@app.get("/logout")
-async def logout(request: Request):
-    request.session.clear()  # Clear the session
-    return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-
-# Route to show the registration form (GET request)
-@app.get("/register", response_class=HTMLResponse)
-async def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
-
-# Password context for hashing and verifying passwords
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# Route to handle user registration (POST request)
-@app.post("/register")
-async def register(username: str = Form(...), password: str = Form(...), confirm_password: str = Form(...)):
-    if password != confirm_password:
-        raise HTTPException(status_code=400, detail="Passwords do not match")
-
-    # Hash the password before creating the user
-    hashed_password = pwd_context.hash(password)
-
-    # Create the user
-    user = {
-        "username": username,
-        "password": hashed_password
-    }
-    await create_user(user)
-    return {"message": "User registered successfully"}
-
-ANILIST_API_URL = "https://graphql.anilist.co"
-router = APIRouter()
-
-@app.post("/user/", response_model=UserOut)
-async def create_user(user: UserIn) -> UserOut:
-    return user
-# Helper function to fetch anime data from AniList API
+# Fetch Recommendations Route
+#
 #
 
 
-@app.get("/user/preferences", response_model=UserOut)
-async def get_user_preferences(user_id: int, db: Session = Depends(get_db)):
-    # Fetch the user from the database
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
 
-    return user  # This will automatically be serialized using UserOut model
-
-
-
-@router.get("/api/anime_recommendations")
-
-
-# Fixing the route for anime recommendations
-@router.get("/api/anime_recommendations", response_model=dict)
-async def get_anime_recommendations(user_id: int, db_session: AsyncSession = Depends(get_db)):
-    """
-    Fetch anime recommendations based on the user's preferences.
-    """
-    # Fetch user preferences dynamically
-    genres = await get_user_preferences(user_id, db_session)
-
-    if not genres:
-        return {"recommendations": []}
-
-    # Constructing the AniList API query using user preferences
-    query = """
-    query ($genres: [String]) {
-      Page {
-        media(genre_in: $genres) {
+# GraphQL query for fetching recommendations
+def get_recommendations_query():
+    return """
+    query {
+      MediaTrend(mediaType: ANIME) {
+        media {
+          id
           title {
             romaji
             english
@@ -249,278 +219,102 @@ async def get_anime_recommendations(user_id: int, db_session: AsyncSession = Dep
     }
     """
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(ANILIST_API_URL, json={"query": query, "variables": {"genres": genres}})
-        data = response.json()
+# Fetch Recommendations Route
+@app.get("/anime/recommendations")
+async def fetch_recommendations(request: Request, genres: str = None, current_user: User = Depends(get_current_user)):
+    # Use the genres passed in the query params or fetch from the user's preferences if not provided
+    if genres is None:
+        favorite_genres = current_user.preferences
+        if not favorite_genres:
+            raise HTTPException(status_code=400, detail="User has no preferences set")
+        genres_list = favorite_genres.split(",")
+    else:
+        genres_list = genres.split(",")
 
-    recommendations = []
-    if "data" in data and "Page" in data["data"]:
-        recommendations = data["data"]["Page"]["media"]
+    # Construct a query to search for anime based on these genres
+    graphql_query = get_recommendations_query()  # No need to pass genres here for the recommendations query
+
+    # Call AniList API to get recommendations
+    response = aniList_graphql(graphql_query)  # No need to pass any variables for the recommendations
+
+    if not response:
+        raise HTTPException(status_code=500, detail="Failed to fetch recommendations from AniList API")
+
+    recommendations = response.get("data", {}).get("MediaTrend", [])
+
+    if not recommendations:
+        raise HTTPException(status_code=404, detail="No recommendations found")
 
     return {"recommendations": recommendations}
 
-# Home page route that displays recommendations and search functionality
-@app.get("/home", response_class=HTMLResponse)
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+@app.get("/dashboard/data")
+async def dashboard_data(current_user: User = Depends(get_current_user)):
+    # Returning the user details as a response
+    return {"user": {"username": current_user.username, "preferences": current_user.preferences}, "token": "Bearer " + create_access_token(data={"sub": current_user.username})}
+
+@app.get("/home.html", response_class=HTMLResponse)
 async def home(request: Request):
-    user = request.session.get("user")
-    if not user:
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-
-    # Fetch anime recommendations by passing 'request'
-    recommendations = await fetch_anime_recommendations(request)
-
-    return templates.TemplateResponse("home.html", {"request": request, "user": user, "recommendations": recommendations})
-
-# Add a search API endpoint for searching anime
-@app.get("/search")
-async def search(request: Request, query: str):
-    search_results = await search_anime(query)  # Function to fetch search results from AniList API
-    return templates.TemplateResponse("home.html", {"request": request, "user": request.session.get("user"), "search_results": search_results})
-
-# Helper function to search anime via AniList API
-# Search for anime by query
-@router.get("/api/search")
-async def search_anime(query: str):
-    search_query = """
-    query ($query: String) {
-      Page {
-        media(search: $query) {
-          title {
-            romaji
-          }
-          coverImage {
-            large
-          }
-        }
-      }
-    }
-    """
-
-    variables = {"query": query}
-
-    async with httpx.AsyncClient() as client:
-        response = await client.post(ANILIST_API_URL, json={"query": search_query, "variables": variables})
-        data = response.json()
-
-    search_results = []
-    if "data" in data and "Page" in data["data"] and "media" in data["data"]["Page"]:
-        search_results = data["data"]["Page"]["media"]
-
-    return {"searchResults": search_results}
+    return templates.TemplateResponse("home.html", {"request": request})
 
 
 
+@app.get("/user/token")
+def get_user_token(current_user: User = Depends(get_current_user)):
+    return {"token": "Bearer " + create_access_token(data={"sub": current_user.username})}
 
 
-async def get_user_by_id(user_id: str, session: AsyncSession) -> User:
-    result = await session.execute(select(User).filter(User.id == user_id))
-    user = result.scalars().first()
-    return user
+def update_preferences():
+    favorite_genres = request.form.get('favorite_genres')
+    # Process and save the preferences (e.g., to the database or session)
+    user = get_current_user()  # Assuming you have a function to get the logged-in user
+    user.favorite_genres = favorite_genres.split(",")  # Store genres as a list
+    save_user(user)  # Save updated preferences
+    return redirect('/recommendations')
 
-@app.post("/user/preferences")
-async def set_user_preferences(request: Request, favorite_genres: str = Form(...), db: AsyncSession = Depends(get_db)):
-    user = request.session.get("user")
-    if not user:
-        raise HTTPException(status_code=403, detail="User not authenticated")
+@app.route('/anime/recommendations')
+def get_recommendations():
+    user = get_current_user()  # Get the current user
+    favorite_genres = user.favorite_genres  # Retrieve favorite genres
+    recommendations = fetch_recommendations_based_on_genres(favorite_genres)
+    return jsonify(recommendations)
 
-    # Fetch the user ID from the session or from the database
-    stmt = select(User).filter(User.username == user)
-    result = await db.execute(stmt)
-    user_obj = result.scalars().first()
-
-    if not user_obj:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Proceed with fetching and updating the user preferences
-    stmt = select(UserPreferences).filter(UserPreferences.user_id == user_obj.id)
-    result = await db.execute(stmt)
-    preferences = result.scalars().first()
-
-    if preferences:
-        preferences.favorite_genres = favorite_genres  # Update existing preferences
-    else:
-        # Create new preferences record
-        preferences = UserPreferences(user_id=user_obj.id, favorite_genres=favorite_genres)
-        db.add(preferences)
-
-    await db.commit()
-    return {"message": "Preferences updated successfully"}
-
-
-# main.py
+# Fetch Recommendations Route based on user's preferences
 
 @app.get("/anime/recommendations")
-async def fetch_anime_recommendations(request: Request):
-    username = request.session.get("user")
-    if not username:
-        raise HTTPException(status_code=403, detail="User not authenticated")
+async def fetch_recommendations(
+    genres: str = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Check if genres is provided or fall back to the user's preferences
+    if genres is None:
+        favorite_genres = current_user.preferences
+        if not favorite_genres:
+            raise HTTPException(status_code=400, detail="User has no preferences set")
+        genres_list = favorite_genres.split(",")
+    else:
+        genres_list = genres.split(",")
 
-    # Fetch user data and preferences asynchronously
-    async with AsyncSessionLocal() as db:
-        stmt = select(User).filter(User.username == username)
-        result = await db.execute(stmt)
-        user = result.scalars().first()
+    # Construct query to search for anime based on these genres
+    graphql_query = search_anime_query(' '.join(genres_list))  # Using genres list for search query
 
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Call AniList API to get recommendations
+    response = aniList_graphql(graphql_query)
 
-    # Fetch preferences
-    stmt = select(UserPreferences).filter(UserPreferences.user_id == user.id)
-    result = await db.execute(stmt)
-    preferences = result.scalars().first()
+    if not response:
+        raise HTTPException(status_code=500, detail="Failed to fetch recommendations from AniList API")
 
-    if not preferences or not preferences.favorite_genres:
-        raise HTTPException(status_code=404, detail="User preferences not set")
+    recommendations = response.get("data", {}).get("Page", {}).get("media", [])
 
-    # Fetch recommendations from AniList API
-    recommendations = await fetch_anime_recommendations_by_genres(preferences.favorite_genres.split(","))
+    if not recommendations:
+        raise HTTPException(status_code=404, detail="No recommendations found")
 
-    return {"recommendations": recommendations}  # Return the recommendations as a dictionary
-
-# Helper function to fetch anime recommendations based on genres
-async def fetch_anime_recommendations_by_genres(favorite_genres: list):
-    genre_queries = ",".join([f'"{genre}"' for genre in favorite_genres])
-    query = f"""
-    query {{
-      Page {{
-        media(genre_in: [{genre_queries}]) {{
-          title {{
-            romaji
-          }}
-          coverImage {{
-            large
-          }}
-        }}
-      }}
-    }}
-    """
-
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(ANILIST_API_URL, json={"query": query})
-            response.raise_for_status()  # Raise an error for bad HTTP status
-            data = response.json()
-
-            recommendations = []
-            if data and "data" in data and "Page" in data["data"]:
-                recommendations = data["data"]["Page"]["media"]
-            else:
-                print("Unexpected response structure or missing data.")
-            return {"recommendations": recommendations}
-        except httpx.RequestError as e:
-            print(f"Request error: {e}")
-            return {"recommendations": []}
-        except Exception as e:
-            print(f"Error processing response: {e}")
-            return {"recommendations": []}
-
-# New route to display the recommendations page
-@app.get("/recommendations", response_class=HTMLResponse)
-@app.get("/recommendations", response_class=HTMLResponse)
-async def recommendations_page(request: Request):
-    username = request.session.get("user")  # Retrieve logged-in username
-    if not username:
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-
-    # Fetch user data
-    async with AsyncSessionLocal() as db:
-        stmt = select(User).filter(User.username == username)
-        result = await db.execute(stmt)
-        user = result.scalars().first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user_id = user.id  # Get the user ID here
-
-    # Fetch preferences and recommendations
-    async with AsyncSessionLocal() as db:
-        stmt = select(UserPreferences).filter(UserPreferences.user_id == user_id)
-        result = await db.execute(stmt)
-        preferences = result.scalars().first()
-
-        if not preferences or not preferences.favorite_genres:
-            return templates.TemplateResponse(
-                "recommendations.html",
-                {"request": request, "user": username, "recommendations": [], "error": "No preferences set."},
-            )
-
-    # Pass correct user_id to fetch recommendations
-    genres = preferences.favorite_genres.split(",")
-    recommendations = await fetch_anime_recommendations_by_genres(genres)
-
-    return templates.TemplateResponse(
-        "recommendations.html",
-        {"request": request, "user": username, "recommendations": recommendations},
-    )
-
-
-
-@app.get("/api/anime_recommendations")
-async def get_recommendations(user_id: int = Query(...)):
-    if not user_id:
-        raise HTTPException(status_code=400, detail="Invalid user_id")
-    # Handle the recommendation logic here
-    return {"message": "Recommendations for user {}".format(user_id)}
-
-AsyncSessionFactory = sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
-
-# Example of handling a session properly with async context manager
-async def get_user_preferences(user_id: int):
-    async with AsyncSessionFactory() as session:
-        async with session.begin():  # This ensures the connection is committed/rolled back
-            result = await session.execute(
-                "SELECT user_preferences.id, user_preferences.user_id, user_preferences.favorite_genres "
-                "FROM user_preferences WHERE user_preferences.user_id = :user_id",
-                {"user_id": user_id}
-            )
-            return result.fetchall()
-
-def add_anime_preference(user_id, anime_title, anime_cover_image, action):
-    conn = sqlite3.connect('anime_preferences.db')  # Use your project database connection
-    cursor = conn.cursor()
-
-    created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    cursor.execute('''
-        INSERT INTO AnimePreferences (user_id, anime_title, anime_cover_image, preference_action, created_at)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (user_id, anime_title, anime_cover_image, action, created_at))
-
-    conn.commit()
-    conn.close()
-
-def remove_anime_preference(user_id, anime_title):
-    conn = sqlite3.connect('anime_preferences.db')  # Use your project database connection
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        UPDATE AnimePreferences
-        SET preference_action = 'remove', created_at = ?
-        WHERE user_id = ? AND anime_title = ? AND preference_action = 'add'
-    ''', (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), user_id, anime_title))
-
-    conn.commit()
-    conn.close()
-
-
-def get_user_preferences(user_id):
-    conn = sqlite3.connect('anime_preferences.db')  # Use your project database connection
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        SELECT anime_title, anime_cover_image, preference_action
-        FROM AnimePreferences
-        WHERE user_id = ?
-    ''', (user_id,))
-    preferences = cursor.fetchall()
-
-    conn.close()
-    return preferences
-
-
-
-app.include_router(router)
+    return {"recommendations": recommendations}
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

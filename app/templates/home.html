@@ -3,80 +3,257 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Anime Recommendation System - Home</title>
-        <link rel="stylesheet" href="/static/style.css" />
-        <script src="/static/script.js" defer></script>
+        <title>Anime Recommendations</title>
         <style>
+            /* Same styling as before */
+            /* Keep all existing styles, no changes needed */
+
+            /* General body styling */
             body {
-                font-family: Arial, sans-serif;
-                background-color: #f4f4f9;
-                color: #333;
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(45deg, #6a11cb, #2575fc);
+                background-size: 400% 400%;
+                animation: gradientShift 15s ease infinite;
                 margin: 0;
                 padding: 0;
+                color: #fff;
             }
+
+            /* Header styling */
             header {
-                background-color: #4caf50;
-                color: white;
-                padding: 10px 20px;
+                background-color: rgba(0, 0, 0, 0.6);
+                padding: 20px 30px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                border-radius: 10px 10px 0 0;
             }
+
+            /* Header title */
             header h1 {
                 margin: 0;
-                font-size: 2em;
+                font-size: 2.5em;
             }
-            nav a {
-                color: white;
+
+            /* Navigation links in header */
+            header nav a {
+                color: #fff;
                 text-decoration: none;
-                margin-left: 15px;
-                font-size: 1.1em;
+                margin-left: 20px;
+                font-size: 1.2em;
+                transition: color 0.3s;
             }
-            nav a:hover {
+
+            /* Hover effect for navigation links */
+            header nav a:hover {
+                color: #4caf50;
                 text-decoration: underline;
             }
+
+            /* Logout button styling */
             header button {
                 background-color: #ff4d4d;
                 color: white;
                 border: none;
-                padding: 8px 16px;
+                padding: 10px 20px;
                 cursor: pointer;
-                font-size: 1em;
-                border-radius: 5px;
+                font-size: 1.1em;
+                border-radius: 8px;
+                transition: background-color 0.3s;
             }
+
+            /* Hover effect for logout button */
             header button:hover {
                 background-color: #e60000;
             }
-            section {
-                padding: 20px;
-                margin: 20px;
-                background-color: white;
-                border-radius: 8px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+            /* Container for sections */
+            .container {
+                padding: 30px;
+                margin: 30px;
+                background-color: rgba(0, 0, 0, 0.8);
+                border-radius: 15px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                display: none;
+                transition: opacity 0.5s ease-in-out;
             }
+
+            /* Active section display */
+            .active {
+                display: block;
+                animation: fadeIn 0.5s ease-in-out;
+            }
+
+            /* Footer styling */
             footer {
                 background-color: #333;
-                color: white;
+                color: #fff;
                 text-align: center;
-                padding: 10px;
+                padding: 15px;
                 position: fixed;
                 bottom: 0;
                 width: 100%;
+                border-radius: 0 0 10px 10px;
+            }
+
+            /* Search results list */
+            #search-results ul,
+            #recommendations-results ul {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 20px;
+                list-style-type: none;
+                padding: 0;
+                justify-content: center;
+            }
+
+            /* Individual anime item in search and recommendations */
+            #search-results li,
+            #recommendations-results li {
+                width: 220px;
+                text-align: center;
+                background-color: #2c3e50;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                transition:
+                    transform 0.3s,
+                    box-shadow 0.3s;
+            }
+
+            /* Hover effect for anime items */
+            #search-results li:hover,
+            #recommendations-results li:hover {
+                transform: scale(1.05);
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            }
+
+            /* Anime cover image */
+            #search-results img,
+            #recommendations-results img {
+                width: 170px;
+                height: auto;
+                border-radius: 5px;
+                margin-bottom: 10px;
+            }
+
+            /* Search form styling */
+            #search-form {
+                display: flex;
+                justify-content: space-between;
+                max-width: 600px;
+                margin: 0 auto;
+                margin-bottom: 25px;
+            }
+
+            /* Search input styling */
+            #search-form input {
+                padding: 12px;
+                width: 80%;
+                font-size: 1.1em;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                transition: border-color 0.3s;
+            }
+
+            /* Focused input field styling */
+            #search-form input:focus {
+                border-color: #4caf50;
+            }
+
+            /* Search button styling */
+            #search-form button {
+                padding: 12px 20px;
+                font-size: 1.1em;
+                background-color: #4caf50;
+                color: white;
+                border: none;
+                cursor: pointer;
+                border-radius: 8px;
+                transition: background-color 0.3s;
+            }
+
+            /* Hover effect for search button */
+            #search-form button:hover {
+                background-color: #45a049;
+            }
+
+            /* Preferences form styling */
+            #preferences-form {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                max-width: 400px;
+                margin: 0 auto;
+            }
+
+            /* Preferences input field */
+            #preferences-form input {
+                padding: 12px;
+                font-size: 1.1em;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                width: 100%;
+            }
+
+            /* Preferences update button */
+            #preferences-form button {
+                padding: 12px 20px;
+                font-size: 1.1em;
+                background-color: #4caf50;
+                color: white;
+                border: none;
+                cursor: pointer;
+                border-radius: 8px;
+                transition: background-color 0.3s;
+            }
+
+            /* Hover effect for preferences button */
+            #preferences-form button:hover {
+                background-color: #45a049;
+            }
+
+            /* Loading message */
+            #loading-message {
+                color: #ffeb3b;
+                font-size: 1.2em;
+            }
+
+            /* Animations */
+            @keyframes fadeIn {
+                0% {
+                    opacity: 0;
+                }
+                100% {
+                    opacity: 1;
+                }
+            }
+
+            @keyframes gradientShift {
+                0% {
+                    background-position: 0% 50%;
+                }
+                50% {
+                    background-position: 100% 50%;
+                }
+                100% {
+                    background-position: 0% 50%;
+                }
             }
         </style>
     </head>
     <body>
         <header>
-            <h1>Welcome, {{ user }}</h1>
+            <h1>Welcome <span id="navbar-username"></span></h1>
             <nav>
-                <a href="/recommendations">Recommended Anime</a>
-                <form action="/logout" method="get" style="display: inline">
-                    <button type="submit">Logout</button>
-                </form>
+                <a href="#" onclick="showHome()">Home</a>
+                <a href="#" onclick="showRecommendations()">Recommendations</a>
+                <button type="button" onclick="logout()">Logout</button>
             </nav>
         </header>
 
-        <section>
+        <!-- Home Section -->
+        <div id="home" class="container active">
             <h2>Search for Anime</h2>
             <form
                 id="search-form"
@@ -92,68 +269,90 @@
                 />
                 <button type="submit">Search</button>
             </form>
-            <div id="search-results">
-                <!-- Search results will be displayed here -->
-                {% if search_results %}
-                <ul>
-                    {% for anime in search_results %}
-                    <li>
-                        <!-- Check if cover image exists, otherwise use a placeholder -->
-                        {% if anime.coverImage %}
-                        <img
-                            src="{{ anime.coverImage.large }}"
-                            alt="{{ anime.title.romaji }} cover"
-                        />
-                        {% else %}
-                        <img
-                            src="/static/default-cover.jpg"
-                            alt="No cover available"
-                        />
-                        {% endif %}
-                        <p>
-                            <!-- Check if the title exists, otherwise display a fallback message -->
-                            {% if anime.title %} {{ anime.title.romaji }} {%
-                            else %} Title not available {% endif %}
-                        </p>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p>No search results found.</p>
-                {% endif %}
+            <div id="search-results"></div>
+        </div>
+
+        <!-- Recommendations Section -->
+        <div id="recommendations" class="container">
+            <h2>Fetch Recommendations Based on Your Preferences</h2>
+            <button id="fetch-recommendations">Fetch Recommendations</button>
+            <div id="loading-message" style="display: none">
+                Loading recommendations...
             </div>
-        </section>
+            <div id="recommendations-results" style="display: none"></div>
+            <br />
+            <h2>Manage Your Preferences</h2>
+            <form id="preferences-form">
+                <label for="favorite-genres"
+                    >Favorite Genres (comma separated):</label
+                >
+                <input
+                    type="text"
+                    id="favorite-genres"
+                    name="favorite_genres"
+                    value=""
+                />
+                <button type="submit">Update Preferences</button>
+            </form>
+        </div>
 
         <footer>
             <p>&copy; 2024 Cayanide Labs System. All rights reserved.</p>
         </footer>
 
         <script>
+            window.onload = function () {
+                const username = localStorage.getItem("username");
+                const usernameDisplay =
+                    document.getElementById("navbar-username");
+                if (username) {
+                    usernameDisplay.innerText = username;
+                } else {
+                    usernameDisplay.innerText = "";
+                }
+
+                // Automatically set the genre preference if it exists
+                const favoriteGenres = localStorage.getItem("favorite-genres");
+                if (favoriteGenres) {
+                    document.getElementById("favorite-genres").value =
+                        favoriteGenres;
+                    fetchRecommendations(favoriteGenres); // Trigger recommendations based on saved preferences
+                }
+            };
+
+            function showHome() {
+                document.getElementById("home").classList.add("active");
+                document
+                    .getElementById("recommendations")
+                    .classList.remove("active");
+            }
+
+            function showRecommendations() {
+                document
+                    .getElementById("recommendations")
+                    .classList.add("active");
+                document.getElementById("home").classList.remove("active");
+            }
+
             async function fetchSearchResults() {
                 const query = document.getElementById("search-query").value;
-                const response = await fetch(`/search?query=${query}`);
+                const response = await fetch(`/anime/search?query=${query}`);
                 const data = await response.json();
-
                 const searchResultsDiv =
                     document.getElementById("search-results");
-                searchResultsDiv.innerHTML = ""; // Clear previous results
+                searchResultsDiv.innerHTML = "";
 
                 if (data.searchResults && data.searchResults.length > 0) {
                     const ul = document.createElement("ul");
                     data.searchResults.forEach((anime) => {
                         const li = document.createElement("li");
-
                         const coverImage = anime.coverImage
                             ? anime.coverImage.large
                             : "/static/default-cover.jpg";
                         const title = anime.title
                             ? anime.title.romaji
                             : "Title not available";
-
-                        li.innerHTML = `
-                            <img src="${coverImage}" alt="${title} cover" />
-                            <p>${title}</p>
-                        `;
+                        li.innerHTML = `<img src="${coverImage}" alt="${title} cover" /><p>${title}</p>`;
                         ul.appendChild(li);
                     });
                     searchResultsDiv.appendChild(ul);
@@ -161,6 +360,99 @@
                     searchResultsDiv.innerHTML =
                         "<p>No search results found.</p>";
                 }
+            }
+
+            // Fetch recommendations based on genres
+            function fetchRecommendations(favoriteGenres) {
+                const loadingMessage =
+                    document.getElementById("loading-message");
+                const recommendationsResults = document.getElementById(
+                    "recommendations-results",
+                );
+
+                loadingMessage.style.display = "block";
+                recommendationsResults.style.display = "none";
+
+                // Split genres and make a search query
+                const genresList = favoriteGenres
+                    .split(",")
+                    .map((genre) => genre.trim());
+                const searchQuery = genresList.join(" ");
+
+                fetch(`/anime/search?query=${searchQuery}`, {
+                    method: "GET",
+                    headers: { accept: "application/json" },
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        recommendationsResults.innerHTML = "";
+                        if (
+                            data.searchResults &&
+                            data.searchResults.length > 0
+                        ) {
+                            const ul = document.createElement("ul");
+                            data.searchResults.forEach((anime) => {
+                                const li = document.createElement("li");
+                                const coverImage = anime.coverImage
+                                    ? anime.coverImage.large
+                                    : "/static/default-cover.jpg";
+                                const title = anime.title
+                                    ? anime.title.romaji
+                                    : "Title not available";
+                                li.innerHTML = `<img src="${coverImage}" alt="${title} cover" /><p>${title}</p>`;
+                                ul.appendChild(li);
+                            });
+                            recommendationsResults.appendChild(ul);
+                        } else {
+                            recommendationsResults.innerHTML =
+                                "<p>No recommendations found.</p>";
+                        }
+                    })
+                    .catch((error) => {
+                        recommendationsResults.innerHTML =
+                            "Error fetching recommendations. Please try again later.";
+                    })
+                    .finally(() => {
+                        loadingMessage.style.display = "none";
+                        recommendationsResults.style.display = "block";
+                    });
+            }
+
+            document
+                .getElementById("preferences-form")
+                .addEventListener("submit", function (e) {
+                    e.preventDefault();
+
+                    const favoriteGenres =
+                        document.getElementById("favorite-genres").value;
+
+                    localStorage.setItem("favorite-genres", favoriteGenres);
+
+                    // Trigger the recommendations after updating preferences
+                    fetchRecommendations(favoriteGenres);
+
+                    alert("Preferences updated successfully");
+                });
+
+            // Trigger recommendations when the fetch button is clicked
+            document
+                .getElementById("fetch-recommendations")
+                .addEventListener("click", function () {
+                    const favoriteGenres =
+                        localStorage.getItem("favorite-genres");
+                    if (!favoriteGenres) {
+                        alert("No preferences set.");
+                        return;
+                    }
+
+                    fetchRecommendations(favoriteGenres);
+                });
+
+            function logout() {
+                localStorage.removeItem("username");
+                localStorage.removeItem("token");
+                localStorage.removeItem("favorite-genres");
+                window.location.href = "/";
             }
         </script>
     </body>
