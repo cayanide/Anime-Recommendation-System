@@ -157,6 +157,31 @@ Anime-Recommendation-System/
 
 ---
 
+
+![image](https://github.com/user-attachments/assets/2399dd09-eb51-42bb-b6b9-4079318d8d3d)
+
+Login page 
+
+![image](https://github.com/user-attachments/assets/f05de0db-33bc-4c46-bfde-e422abef9f76)
+
+Registration Page
+
+![image](https://github.com/user-attachments/assets/fc11820c-31fd-46aa-a7b1-21c4bc7aad43)
+
+Token Generated Page (Only For Debugging Disable in Production)
+
+![image](https://github.com/user-attachments/assets/1943b9ec-218d-4788-8849-210cc9dac32e)
+
+Search Page 
+
+![image](https://github.com/user-attachments/assets/c412e663-a8f1-4c0c-94d2-15302575e44b)
+
+Reccomendation Page 
+
+![image](https://github.com/user-attachments/assets/a55b4e79-ec3c-425d-a535-14755d828d46)
+
+Set Prefrences 
+
 ## Contribution
 
 1. Fork the repository.
