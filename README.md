@@ -20,17 +20,12 @@ The Anime Recommendation System is a FastAPI-based project designed to provide p
 Anime-Recommendation-System/
 |
 ├── app/
-│   ├── __init__.py       # Package initialization
+│   ├──      # Package initialization
 │   ├── main.py           # Application entry point
 │   ├── models.py         # Database models
-│   ├── schemas.py        # Pydantic schemas
-│   ├── database.py       # Database connection setup
-│   ├── services.py       # Business logic and services
-│   ├── routes/
-│   │   ├── __init__.py   # Package initialization for routes
-│   │   ├── recommendations.py  # Routes for recommendation logic
-│   │   └── users.py      # Routes for user management
-│   └── utils.py          # Utility functions
+│   ├── database.py       # Database connection setup       
+│   ├── 
+│  
 |
 ├── requirements.txt      # Python dependencies
 ├── Dockerfile            # Docker image configuration
